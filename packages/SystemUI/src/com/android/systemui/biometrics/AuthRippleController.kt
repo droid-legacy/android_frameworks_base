@@ -218,65 +218,13 @@ class AuthRippleController @Inject constructor(
     }
 
     private fun showUnlockedRipple() {
-        notificationShadeWindowController.setForcePluginOpen(true, this)
-
-        // This code path is not used if the KeyguardTransitionRepository is managing the light
-        // reveal scrim.
-        if (!lightRevealMigration()) {
-            if (statusBarStateController.isDozing || biometricUnlockController.isWakeAndUnlock) {
-                circleReveal?.let {
-                    lightRevealScrim.revealAmount = 0f
-                    lightRevealScrim.revealEffect = it
-                    startLightRevealScrimOnKeyguardFadingAway = true
-                }
-            }
-        }
-
-        mView.startUnlockedRipple(
-            /* end runnable */
-            Runnable {
-                notificationShadeWindowController.setForcePluginOpen(false, this)
-            }
-        )
+        return
     }
 
     override fun onKeyguardFadingAwayChanged() {
-        if (lightRevealMigration()) {
-            return
-        }
-
-        if (keyguardStateController.isKeyguardFadingAway) {
-            if (startLightRevealScrimOnKeyguardFadingAway) {
-                lightRevealScrimAnimator?.cancel()
-                lightRevealScrimAnimator = ValueAnimator.ofFloat(.1f, 1f).apply {
-                    interpolator = Interpolators.LINEAR_OUT_SLOW_IN
-                    duration = RIPPLE_ANIMATION_DURATION
-                    startDelay = keyguardStateController.keyguardFadingAwayDelay
-                    addUpdateListener { animator ->
-                        if (lightRevealScrim.revealEffect != circleReveal) {
-                            // if something else took over the reveal, let's cancel ourselves
-                            cancel()
-                            return@addUpdateListener
-                        }
-                        lightRevealScrim.revealAmount = animator.animatedValue as Float
-                    }
-                    addListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            // Reset light reveal scrim to the default, so the CentralSurfaces
-                            // can handle any subsequent light reveal changes
-                            // (ie: from dozing changes)
-                            if (lightRevealScrim.revealEffect == circleReveal) {
-                                lightRevealScrim.revealEffect = LiftReveal
-                            }
-
-                            lightRevealScrimAnimator = null
-                        }
-                    })
-                    start()
-                }
-                startLightRevealScrimOnKeyguardFadingAway = false
-            }
-        }
+        lightRevealScrim.revealAmount = 1f
+        startLightRevealScrimOnKeyguardFadingAway = false
+        return
     }
 
     /**
