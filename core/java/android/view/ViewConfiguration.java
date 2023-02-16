@@ -547,8 +547,7 @@ public class ViewConfiguration {
                 com.android.internal.R.integer.config_smartSelectionInitializingTimeoutMillis);
     }
 
-    /** @hide */
-    private static boolean isNumeric(String string) {
+    public static boolean isNumeric(String string) {
         try {
             Integer.parseInt(string);
         } catch(NumberFormatException e) {
