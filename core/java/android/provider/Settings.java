@@ -15598,6 +15598,17 @@ public final class Settings {
         public static final String CAPTIVE_PORTAL_USER_AGENT = "captive_portal_user_agent";
 
         /**
+         * Int value specifying the power menu type (default is 0)
+         * 0 - Lite
+         * 1 - Full
+         * 2 - Classic
+         * 3 - Grid
+         * 4 - Legacy
+         * @hide
+         */
+        public static final String POWER_MENU_TYPE = "power_menu_type";
+
+        /**
          * Whether to try cellular data recovery when a bad network is reported.
          *
          * @hide
