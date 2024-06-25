@@ -310,7 +310,6 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
 
     private final GestureNavigationSettingsObserver mGestureNavigationSettingsObserver;
 
-    private boolean mBlockedGesturalNavigation;
     private boolean mIsBackGestureArrowEnabled;
 
     private final NavigationEdgeBackPlugin.BackCallback mBackCallback =
@@ -651,10 +650,6 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
         mIsNavBarShownTransiently = isTransient;
     }
 
-    public void setBlockedGesturalNavigation(boolean blocked) {
-        mBlockedGesturalNavigation = blocked;
-    }
-
     private void disposeInputChannel() {
         if (mInputEventReceiver != null) {
             mInputEventReceiver.dispose();
@@ -729,11 +724,7 @@ public class EdgeBackGestureHandler implements PluginListener<NavigationEdgeBack
                 // Register input event receiver
                 mInputMonitor = new InputMonitorCompat("edge-swipe", mDisplayId);
                 mInputEventReceiver = mInputMonitor.getInputReceiver(Looper.getMainLooper(),
-                        Choreographer.getInstance(), event -> {
-                            if (!mBlockedGesturalNavigation) {
-                                onInputEvent(event);
-                            }
-                        });
+                        Choreographer.getInstance(), this::onInputEvent);
 
                 // Add a nav bar panel window
                 mIsNewBackAffordanceEnabled = mFeatureFlags.isEnabled(Flags.NEW_BACK_AFFORDANCE);
