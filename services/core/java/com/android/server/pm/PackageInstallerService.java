@@ -696,6 +696,17 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
             }
         }
 
+        if ((params.installFlags & PackageManager.INSTALL_ENABLE_ROLLBACK) != 0) {
+            if (mContext.checkCallingOrSelfPermission(Manifest.permission.MANAGE_ROLLBACKS)
+                    != PackageManager.PERMISSION_GRANTED &&
+                    mContext.checkCallingOrSelfPermission(Manifest.permission.TEST_MANAGE_ROLLBACKS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                throw new SecurityException(
+                        "INSTALL_ENABLE_ROLLBACK requires the MANAGE_ROLLBACKS permission or the "
+                                + "TEST_MANAGE_ROLLBACKS permission");
+            }
+        }
+
         // App package name and label length is restricted so that really long strings aren't
         // written to disk.
         if (params.appPackageName != null && !isValidPackageName(params.appPackageName)) {
@@ -799,6 +810,16 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
                         != PackageManager.PERMISSION_GRANTED) {
                     throw new SecurityException(
                             "Setting rollback lifetime requires the MANAGE_ROLLBACKS permission");
+                }
+                final long maxRollbackLifetimeMillis = 365 * DateUtils.DAY_IN_MILLIS;
+                if (params.rollbackLifetimeMillis > maxRollbackLifetimeMillis) {
+                    Slog.e(
+                            TAG,
+                            "rollbackLifetimeMillis "
+                                    + params.rollbackLifetimeMillis
+                                    + " exceeds the maximum allowed. Capping to "
+                                    + maxRollbackLifetimeMillis);
+                    params.rollbackLifetimeMillis = maxRollbackLifetimeMillis;
                 }
             } else if (params.rollbackLifetimeMillis < 0) {
                 throw new IllegalArgumentException("rollbackLifetimeMillis can't be negative.");
@@ -958,6 +979,14 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
                 // For now, installs to adopted media are treated as internal from
                 // an install flag point-of-view.
                 params.installFlags |= PackageManager.INSTALL_INTERNAL;
+                // Check if volumeUuid value is valid, else fail.
+                try {
+                    StorageManager.convert(params.volumeUuid);
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Invalid volumeUuid value in session "
+                            + "params: "
+                            + params.volumeUuid);
+                }
             } else {
                 params.installFlags |= PackageManager.INSTALL_INTERNAL;
 
@@ -969,6 +998,11 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
                 } finally {
                     Binder.restoreCallingIdentity(ident);
                 }
+            }
+            if (params.volumeUuid != null && params.appPackageName != null
+                    && mPm.isPackageDeviceAdmin(params.appPackageName, userId)) {
+                throw new IllegalArgumentException(
+                        "Device Admin can only be installed on internal storage.");
             }
         }
 
@@ -1029,6 +1063,8 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
         }
 
         final var dpmi = LocalServices.getService(DevicePolicyManagerInternal.class);
+        // Only the system should be able to set this flag - so ensure it is unset when not needed.
+        params.installFlags &= ~PackageManager.INSTALL_FROM_MANAGED_USER_OR_PROFILE;
         if (dpmi != null && dpmi.isUserOrganizationManaged(userId)) {
             params.installFlags |= PackageManager.INSTALL_FROM_MANAGED_USER_OR_PROFILE;
         }
@@ -1355,6 +1391,18 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
     @Override
     public ParceledListSlice<SessionInfo> getAllSessions(int userId) {
         final int callingUid = Binder.getCallingUid();
+        return getAllSessions(userId, callingUid);
+    }
+
+    /**
+     * Overload of {@link #getAllSessions(int)} that allows passing a specific UID to be used
+     * for {@link SessionInfo} generation and filtering.
+     *
+     * @param userId the user to get sessions for
+     * @param filterCallingUid the UID used for {@link SessionInfo} scrubbing and filtering
+     */
+    ParceledListSlice<SessionInfo> getAllSessions(int userId, int filterCallingUid) {
+        final int callingUid = Binder.getCallingUid();
         final Computer snapshot = mPm.snapshotComputer();
         snapshot.enforceCrossUserPermission(callingUid, userId, true, false, "getAllSessions");
 
@@ -1364,11 +1412,12 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
                 final PackageInstallerSession session = mSessions.valueAt(i);
                 if (session.userId == userId && !session.hasParentSessionId()
                         && !(session.isStaged() && session.isDestroyed())) {
-                    result.add(session.generateInfoForCaller(false /* includeIcon */, callingUid));
+                    result.add(session.generateInfoForCaller(false /* includeIcon */,
+                            filterCallingUid));
                 }
             }
         }
-        result.removeIf(info -> shouldFilterSession(snapshot, callingUid, info));
+        result.removeIf(info -> shouldFilterSession(snapshot, filterCallingUid, info));
         return new ParceledListSlice<>(result);
     }
 

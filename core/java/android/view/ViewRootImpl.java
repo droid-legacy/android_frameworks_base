@@ -11792,6 +11792,10 @@ public final class ViewRootImpl implements ViewParent,
 
         @Override
         public void requestScrollCapture(IScrollCaptureResponseListener listener) {
+            final int callingUid = Binder.getCallingUid();
+            if (callingUid != Process.SYSTEM_UID && callingUid != Process.myUid()) {
+                return;
+            }
             final ViewRootImpl viewAncestor = mViewAncestor.get();
             if (viewAncestor != null) {
                 viewAncestor.dispatchScrollCaptureRequest(listener);
@@ -11800,8 +11804,14 @@ public final class ViewRootImpl implements ViewParent,
 
         @Override
         public void dumpWindow(ParcelFileDescriptor pfd) {
+            final int callingUid = Binder.getCallingUid();
+            if (callingUid != Process.SYSTEM_UID && callingUid != Process.myUid()) {
+                IoUtils.closeQuietly(pfd);
+                return;
+            }
             final ViewRootImpl viewAncestor = mViewAncestor.get();
             if (viewAncestor == null) {
+                IoUtils.closeQuietly(pfd);
                 return;
             }
             viewAncestor.mHandler.postAtFrontOfQueue(() -> {

@@ -32,7 +32,7 @@
     <string name="global_action_restart_fastboot_progress">Fastbootd rejimində yenidən başladılır\u2026</string>
     <string name="global_action_current_user">Hazırkı</string>
     <string name="global_action_users">İstifadəçilər</string>
-    <string name="status_bar_icons_title">Status çubuğu ikonları</string>
+    <string name="status_bar_icons_title">Status çubuğu simgələri</string>
     <string name="drag_or_tap_to_add_tiles">Xana əlavə etmək üçün basılı tutub sürükləyin və ya toxunun</string>
     <string name="quick_settings_ambient_display_label">Bildiriş ekranı</string>
     <string name="accessibility_quick_settings_ambient_display_off">Bildiriş ekranı bağlıdır.</string>
@@ -61,7 +61,7 @@
     <string name="quick_settings_usb_tether_label">USB internet paylaşımı</string>
     <string name="quick_settings_vpn_label">VPN</string>
     <string name="quick_settings_vpn_connect_dialog_title">Bağlantı qur\u2026</string>
-    <string name="vpn_credentials_hint"><xliff:g id="name">%s</xliff:g> ilə bağlantı qurmaq üçün kimlik məlumatlarınızı daxil edin</string>
+    <string name="vpn_credentials_hint"><xliff:g id="name">%s</xliff:g> ilə bağlantı qurmaq üçün kimlik bilgilərinizi daxil edin</string>
     <string name="vpn_credentials_username">İstifadəçi adı</string>
     <string name="vpn_credentials_password">Parol</string>
     <string name="vpn_credentials_dialog_connect">Bağlantı qur</string>
@@ -71,7 +71,7 @@
     <string name="screenrecord_longer_timeout_switch_label">Daha böyük fayl ölçüsü limiti</string>
     <string name="screenrecord_longer_timeout_switch_summary">Yazma ölçüsünü 15 GB-la məhdudlaşdır</string>
     <string name="screenrecord_skip_time_label">Taymeri ötür</string>
-    <string name="screenrecord_skip_time_summary">3 saniyə gözləməni sil</string>
+    <string name="screenrecord_skip_time_summary">3 saniyə gözləməni aradan qaldır</string>
     <string name="screenrecord_hevc_switch_label">HEVC kodlaşdırma</string>
     <string name="screenrecord_hevc_switch_summary">Daha səmərəli HEVC kodlaşdırıcını istifadə et</string>
     <string name="battery_notification_channel_tv">Batareya xəbərdarlığı</string>

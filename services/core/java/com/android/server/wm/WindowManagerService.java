@@ -1233,6 +1233,7 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void onShellCommand(FileDescriptor in, FileDescriptor out, FileDescriptor err,
             String[] args, ShellCallback callback, ResultReceiver result) {
+        Binder.enforceShellCommandUid(result);
         new WindowManagerShellCommand(this).exec(this, in, out, err, args, callback, result);
     }
 
@@ -1776,6 +1777,12 @@ public class WindowManagerService extends IWindowManager.Stub
                 if (!displayContent.canAddToastWindowForUid(callingUid)) {
                     ProtoLog.w(WM_ERROR, "Adding more than one toast window for UID at a time.");
                     return WindowManagerGlobal.ADD_DUPLICATE_ADD;
+                }
+                // Because a WindowToken of TYPE_TOAST only allows one toast window, block the
+                // addition of any other toast window to this token.
+                if (addToastWindowRequiresToken && !token.isEmpty()) {
+                    // ProtoLog.w(WM_ERROR, "Adding toast window with non-empty token.");
+                    return WindowManagerGlobal.ADD_BAD_APP_TOKEN;
                 }
                 // Make sure this happens before we moved focus as one can make the
                 // toast focusable to force it not being hidden after the timeout.

@@ -473,10 +473,25 @@ public final class DeviceAdminInfo implements Parcelable {
      */
     public CharSequence loadDescription(PackageManager pm) throws NotFoundException {
         if (mActivityInfo.descriptionRes != 0) {
-            return pm.getText(mActivityInfo.packageName,
+            try {
+                return pm.getText(mActivityInfo.packageName,
                     mActivityInfo.descriptionRes, mActivityInfo.applicationInfo);
+            } catch (OutOfMemoryError e) {
+                throw new NotFoundException();
+            }
         }
         throw new NotFoundException();
+    }
+
+    /**
+     * @hide
+     * Load user-visible description associated with this device admin. The description is trimmed
+     * to 1024 characters by leveraging {@link ComponentInfo#loadDescription(PackageManager)}.
+     *
+     * @param pm Supply a PackageManager used to load the device admin's resources.
+     */
+    public CharSequence loadDescriptionSafe(@NonNull PackageManager pm) throws NotFoundException {
+        return mActivityInfo.loadDescription(pm);
     }
 
     /**

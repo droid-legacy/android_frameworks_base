@@ -92,6 +92,7 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.gui.TouchOcclusionMode;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.InputConfig;
@@ -226,6 +227,18 @@ public class WindowStateTests extends WindowTestsBase {
     }
 
     @Test
+    public void testSubWindowHiddenWhenSuspended() {
+        final WindowState parent = createWindow(null, TYPE_APPLICATION_OVERLAY, "parent");
+        final WindowState subWindow = spy(
+                createWindow(parent, TYPE_APPLICATION_PANEL, "subWindow"));
+
+        subWindow.setHiddenWhileSuspended(true);
+        verify(subWindow).hide(true /* doAnimation */, true /* requestAnim */);
+        subWindow.setHiddenWhileSuspended(false);
+        verify(subWindow).show(true /* doAnimation */, true /* requestAnim */);
+    }
+
+    @Test
     public void testGetTopParentWindow() {
         final WindowState root = createWindow(null, TYPE_APPLICATION, "root");
         final WindowState child1 = createWindow(root, FIRST_SUB_WINDOW, "child1");
@@ -249,10 +262,13 @@ public class WindowStateTests extends WindowTestsBase {
         assertTrue(window.isOnScreen());
         window.hide(false /* doAnimation */, false /* requestAnim */);
         assertFalse(window.isOnScreen());
+        verify(mTransaction).hide(window.mSurfaceControl);
+        clearInvocations(mTransaction);
 
         // Verifies that a window without animation can be hidden even if its parent is animating.
         window.show(false /* doAnimation */, false /* requestAnim */);
         assertTrue(window.isVisibleByPolicy());
+        verify(mTransaction).show(window.mSurfaceControl);
         window.getParent().startAnimation(mTransaction, mock(AnimationAdapter.class),
                 false /* hidden */, SurfaceAnimator.ANIMATION_TYPE_TOKEN_TRANSFORM);
         window.mAttrs.windowAnimations = 0;
@@ -1223,6 +1239,20 @@ public class WindowStateTests extends WindowTestsBase {
         assertFalse(overlay.isReadyToDispatchInsetsState());
         mDisplayContent.getInsetsStateController().notifyInsetsChanged();
         assertFalse(overlay.getWindowFrames().hasInsetsChanged());
+    }
+
+    @SetupWindows(addWindows = { W_INPUT_METHOD })
+    @Test
+    public void testGetTouchOcclusionModeOfImeWindow() {
+        final WindowState app = newWindowBuilder("app", TYPE_APPLICATION).build();
+        makeWindowVisibleAndDrawn(mImeWindow);
+
+        final InsetsStateController controller = mDisplayContent.getInsetsStateController();
+        final ImeInsetsSourceProvider imeProvider = controller.getImeSourceProvider();
+        imeProvider.setWindowContainer(mImeWindow, null, null);
+        imeProvider.updateControlForTarget(app, false, null);
+
+        assertEquals(TouchOcclusionMode.USE_OPACITY, mImeWindow.getTouchOcclusionMode());
     }
 
     @SetupWindows(addWindows = { W_INPUT_METHOD, W_ACTIVITY })

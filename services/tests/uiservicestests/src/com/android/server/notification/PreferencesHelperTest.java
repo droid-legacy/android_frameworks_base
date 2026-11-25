@@ -1218,19 +1218,20 @@ public class PreferencesHelperTest extends UiServiceTestCase {
 
         ByteArrayOutputStream baos = writeXmlAndPurge(
                 PKG_N_MR1, UID_N_MR1, false, USER_SYSTEM);
-        String expected = "<ranking version=\"4\">\n"
+        String expected_o = "<ranking version=\"4\">\n"
                 + "<package name=\"com.example.o\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"false\" "
                 + "sent_valid_msg=\"false\" user_demote_msg_app=\"false\" sent_valid_bubble"
-                + "=\"false\" uid=\"10002\">\n"
+                + "=\"false\" uid=\"" + UID_O + "\">\n"
                 + "<channel id=\"id\" name=\"name\" importance=\"2\" "
                 + "sound=\"content://settings/system/notification_sound\" usage=\"5\" "
                 + "content_type=\"4\" flags=\"0\" show_badge=\"true\" orig_imp=\"2\" />\n"
-                + "</package>\n"
-                + "<package name=\"com.example.n_mr1\" show_badge=\"true\" "
+                + "</package>\n";
+        String expected_n =
+                "<package name=\"com.example.n_mr1\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"false\" "
                 + "sent_valid_msg=\"false\" user_demote_msg_app=\"false\" sent_valid_bubble"
-                + "=\"false\" uid=\"10001\">\n"
+                + "=\"false\" uid=\"" + UID_N_MR1 + "\">\n"
                 + "<channelGroup id=\"1\" name=\"bye\" blocked=\"false\" locked=\"0\" />\n"
                 + "<channelGroup id=\"2\" name=\"hello\" blocked=\"false\" locked=\"0\" />\n"
                 + "<channel id=\"id1\" name=\"name1\" importance=\"4\" show_badge=\"true\" "
@@ -1245,11 +1246,15 @@ public class PreferencesHelperTest extends UiServiceTestCase {
                 + "<channel id=\"miscellaneous\" name=\"Uncategorized\" "
                 + "sound=\"content://settings/system/notification_sound\" usage=\"5\" "
                 + "content_type=\"4\" flags=\"0\" show_badge=\"true\" />\n"
-                + "</package>\n"
-                + "<package name=\"com.example.p\" show_badge=\"true\" "
+                + "</package>\n";
+        String expected_p =
+                "<package name=\"com.example.p\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"true\" sent_valid_msg=\"true\""
-                + " user_demote_msg_app=\"true\" sent_valid_bubble=\"false\" uid=\"10003\"";
-        assertThat(baos.toString()).contains(expected);
+                + " user_demote_msg_app=\"true\" sent_valid_bubble=\"false\" uid=\""+ UID_P + "\" />";
+        String actual = baos.toString();
+        assertThat(actual).contains(expected_o);
+        assertThat(actual).contains(expected_n);
+        assertThat(actual).contains(expected_p);
     }
 
     @Test
@@ -1304,16 +1309,17 @@ public class PreferencesHelperTest extends UiServiceTestCase {
                 PKG_N_MR1, UID_N_MR1, true, USER_SYSTEM);
         String expected = "<ranking version=\"4\">\n"
                 // Importance 0 because off in permissionhelper
-                + "<package name=\"com.example.o\" importance=\"0\" show_badge=\"true\" "
+                "<package name=\"com.example.o\" importance=\"0\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"false\" "
                 + "sent_valid_msg=\"false\" user_demote_msg_app=\"false\" sent_valid_bubble"
                 + "=\"false\">\n"
                 + "<channel id=\"id\" name=\"name\" importance=\"2\" "
                 + "sound=\"content://settings/system/notification_sound\" usage=\"5\" "
                 + "content_type=\"4\" flags=\"0\" show_badge=\"true\" orig_imp=\"2\" />\n"
-                + "</package>\n"
+                + "</package>\n";
+        String expected_n =
                 // Importance default because on in permission helper
-                + "<package name=\"com.example.n_mr1\" importance=\"3\" show_badge=\"true\" "
+                "<package name=\"com.example.n_mr1\" importance=\"3\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"false\" "
                 + "sent_valid_msg=\"false\" user_demote_msg_app=\"false\" sent_valid_bubble"
                 + "=\"false\">\n"
@@ -1331,15 +1337,19 @@ public class PreferencesHelperTest extends UiServiceTestCase {
                 + "<channel id=\"miscellaneous\" name=\"Uncategorized\" "
                 + "sound=\"content://settings/system/notification_sound\" usage=\"5\" "
                 + "content_type=\"4\" flags=\"0\" show_badge=\"true\" />\n"
-                + "</package>\n"
+                + "</package>\n";
+        String expected_p =
                 // Importance default because on in permission helper
-                + "<package name=\"com.example.p\" importance=\"3\" show_badge=\"true\" "
+                "<package name=\"com.example.p\" importance=\"3\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"true\" sent_valid_msg=\"true\""
                 + " user_demote_msg_app=\"true\" sent_valid_bubble=\"false\"";
-        assertThat(baos.toString()).contains(expected);
+        String actual = baos.toString();
+        assertThat(actual).contains(expected);
+        assertThat(actual).contains(expected_n);
+        assertThat(actual).contains(expected_p);
         // Packages that exist solely in permissionhelper
-        assertThat(baos.toString()).contains("<package name=\"first\" importance=\"3\"");
-        assertThat(baos.toString()).contains("<package name=\"third\" importance=\"0\"");
+        assertThat(actual).contains("<package name=\"first\" importance=\"3\"");
+        assertThat(actual).contains("<package name=\"third\" importance=\"0\"");
     }
 
     @Test
@@ -1379,7 +1389,7 @@ public class PreferencesHelperTest extends UiServiceTestCase {
         mHelper.createNotificationChannel(PKG_N_MR1, UID_N_MR1, channel3, false, false,
                 SYSTEM_UID, true);
         mHelper.createNotificationChannel(PKG_O, UID_O, getChannel(), true, false,
-                UID_N_MR1, false);
+                UID_O, false);
 
         mHelper.setShowBadge(PKG_N_MR1, UID_N_MR1, true);
         mHelper.setInvalidMessageSent(PKG_P, UID_P);
@@ -1390,16 +1400,18 @@ public class PreferencesHelperTest extends UiServiceTestCase {
                 PKG_N_MR1, UID_N_MR1, true, USER_SYSTEM);
         String expected = "<ranking version=\"4\">\n"
                 // Importance 0 because off in permissionhelper
-                + "<package name=\"com.example.o\" importance=\"0\" show_badge=\"true\" "
+        String expected_o =
+                "<package name=\"com.example.o\" importance=\"0\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"false\" "
                 + "sent_valid_msg=\"false\" user_demote_msg_app=\"false\" sent_valid_bubble"
                 + "=\"false\">\n"
                 + "<channel id=\"id\" name=\"name\" importance=\"2\" "
                 + "sound=\"content://settings/system/notification_sound\" usage=\"5\" "
                 + "content_type=\"4\" flags=\"0\" show_badge=\"true\" orig_imp=\"2\" />\n"
-                + "</package>\n"
-                // Importance 0 because missing from permission helper
-                + "<package name=\"com.example.n_mr1\" importance=\"0\" show_badge=\"true\" "
+                + "</package>\n";
+        String expected_n =
+                // Importance missing because missing from permission helper
+                "<package name=\"com.example.n_mr1\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"false\" "
                 + "sent_valid_msg=\"false\" user_demote_msg_app=\"false\" sent_valid_bubble"
                 + "=\"false\">\n"
@@ -1417,12 +1429,16 @@ public class PreferencesHelperTest extends UiServiceTestCase {
                 + "<channel id=\"miscellaneous\" name=\"Uncategorized\" "
                 + "sound=\"content://settings/system/notification_sound\" usage=\"5\" "
                 + "content_type=\"4\" flags=\"0\" show_badge=\"true\" />\n"
-                + "</package>\n"
+                + "</package>\n";
+        String expected_p =
                 // Importance default because on in permission helper
-                + "<package name=\"com.example.p\" importance=\"3\" show_badge=\"true\" "
+                "<package name=\"com.example.p\" importance=\"3\" show_badge=\"true\" "
                 + "app_user_locked_fields=\"0\" sent_invalid_msg=\"true\" sent_valid_msg=\"true\""
                 + " user_demote_msg_app=\"true\" sent_valid_bubble=\"false\"";
-        assertThat(baos.toString()).contains(expected);
+        String actual = baos.toString();
+        assertThat(actual).contains(expected_o);
+        assertThat(actual).contains(expected_n);
+        assertThat(actual).contains(expected_p);
     }
 
     @Test
@@ -3934,7 +3950,7 @@ public class PreferencesHelperTest extends UiServiceTestCase {
         String actual = sw.toString();
 
         // nobody gets any importance
-        assertFalse(actual.contains("importance="));
+        assertThat(actual).doesNotContain("importance=");
     }
 
     @Test
@@ -4824,8 +4840,96 @@ public class PreferencesHelperTest extends UiServiceTestCase {
                 IMPORTANCE_LOW);
         mHelper.updateNotificationChannel(PKG_O, UID_O, updateImportanceLow, true,
                 SYSTEM_UID, true);
-        assertEquals(IMPORTANCE_LOW,
+        assertEquals(IMPORTANCE_HIGH,
                 mHelper.getNotificationChannel(PKG_O, UID_O, a.getId(), false).getImportance());
+    }
+
+    @Test
+    public void testUpdateNotificationChannel_preservesLockAndBlockable() {
+        NotificationChannel channel = new NotificationChannel("a", "a", IMPORTANCE_HIGH);
+        ArraySet<Pair<String, Integer>> toAdd = new ArraySet<>();
+        toAdd.add(new Pair<>(PKG_O, UID_O));
+        mHelper.updateDefaultApps(UserHandle.getUserId(UID_O), null, toAdd);
+        channel.setBlockable(false);
+        mHelper.createNotificationChannel(PKG_O, UID_O, channel, true, false, UID_O, false);
+
+        // Verify it is locked and not blockable initially
+        NotificationChannel createdChannel = mHelper.getNotificationChannel(PKG_O, UID_O, "a",
+                    false);
+        assertTrue(createdChannel.isImportanceLockedByCriticalDeviceFunction());
+        assertFalse(createdChannel.isBlockable());
+
+        // Prepare an update (importance LOW, default blockable/locked to false in the new object)
+        NotificationChannel update = new NotificationChannel("a", "a", IMPORTANCE_LOW);
+        mHelper.updateNotificationChannel(PKG_O, UID_O, update, true, UID_O, false);
+
+        // Verify importance was NOT changed (stayed HIGH because it is locked and not blockable)
+        NotificationChannel resultingChannel = mHelper.getNotificationChannel(PKG_O, UID_O, "a",
+                    false);
+        assertEquals(IMPORTANCE_HIGH, resultingChannel.getImportance());
+        // Verify lock and blockable were preserved
+        assertTrue(resultingChannel.isImportanceLockedByCriticalDeviceFunction());
+        assertFalse(resultingChannel.isBlockable());
+    }
+
+    @Test
+    public void testUpdateNotificationChannel_preservesLockAndBlockable_whenBlockable() {
+        NotificationChannel channel = new NotificationChannel("a", "a", IMPORTANCE_HIGH);
+        ArraySet<Pair<String, Integer>> toAdd = new ArraySet<>();
+        toAdd.add(new Pair<>(PKG_O, UID_O));
+        mHelper.updateDefaultApps(UserHandle.getUserId(UID_O), null, toAdd);
+        channel.setBlockable(true);
+
+        mHelper.createNotificationChannel(PKG_O, UID_O, channel, true, false, UID_O, false);
+
+        // Verify it is locked and blockable initially
+        NotificationChannel createdChannel = mHelper.getNotificationChannel(PKG_O, UID_O, "a",
+                    false);
+        assertTrue(createdChannel.isImportanceLockedByCriticalDeviceFunction());
+        assertTrue(createdChannel.isBlockable());
+
+        // Prepare an update (importance LOW)
+        NotificationChannel update = new NotificationChannel("a", "a", IMPORTANCE_LOW);
+
+        mHelper.updateNotificationChannel(PKG_O, UID_O, update, true, UID_O, false);
+
+        // Verify importance WAS changed to LOW (allowed because it is blockable)
+        NotificationChannel resultingChannel = mHelper.getNotificationChannel(PKG_O, UID_O, "a",
+                    false);
+        assertEquals(IMPORTANCE_LOW, resultingChannel.getImportance());
+        // Verify lock and blockable were preserved
+        assertTrue(resultingChannel.isImportanceLockedByCriticalDeviceFunction());
+        assertTrue(resultingChannel.isBlockable());
+    }
+
+    @Test
+    public void testUpdateNotificationChannel_updatesImportance_whenNone() {
+        NotificationChannel channel = new NotificationChannel("a", "a", IMPORTANCE_NONE);
+        ArraySet<Pair<String, Integer>> toAdd = new ArraySet<>();
+        toAdd.add(new Pair<>(PKG_O, UID_O));
+        mHelper.updateDefaultApps(UserHandle.getUserId(UID_O), null, toAdd);
+        channel.setBlockable(false);
+
+        mHelper.createNotificationChannel(PKG_O, UID_O, channel, true, false, UID_O, false);
+
+        // Verify it is locked and blockable initially
+        NotificationChannel createdChannel = mHelper.getNotificationChannel(PKG_O, UID_O, "a",
+                    false);
+        assertTrue(createdChannel.isImportanceLockedByCriticalDeviceFunction());
+        assertFalse(createdChannel.isBlockable());
+
+        // Prepare an update (importance LOW)
+        NotificationChannel update = new NotificationChannel("a", "a", IMPORTANCE_LOW);
+
+        mHelper.updateNotificationChannel(PKG_O, UID_O, update, true, UID_O, false);
+
+        // Verify importance WAS changed to LOW (allowed because it is blockable)
+        NotificationChannel resultingChannel = mHelper.getNotificationChannel(PKG_O, UID_O, "a",
+                    false);
+        assertEquals(IMPORTANCE_LOW, resultingChannel.getImportance());
+        // Verify lock and blockable were preserved
+        assertTrue(resultingChannel.isImportanceLockedByCriticalDeviceFunction());
+        assertFalse(resultingChannel.isBlockable());
     }
 
     @Test

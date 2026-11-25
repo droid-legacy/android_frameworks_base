@@ -421,6 +421,17 @@ class ActivityStarter {
         String intentCreatorPackage;
         int startFlags;
         SafeActivityOptions activityOptions;
+        /**
+         * Set to {@code true} for system-delegated activity launches (such as {@link
+         * ActivityTaskManagerService#startActivityAsCaller}) or internal system UI redirects (such
+         * as rerouting to {@link HeavyWeightSwitcherActivity} in {@link
+         * #resolveToHeavyWeightSwitcherIfNeeded}) to bypass target component permission and
+         * exported checks in {@link ActivityTaskSupervisor#checkStartAnyActivityPermission}.
+         *
+         * <p>Note: this field has no effect on Background Activity Launch (BAL) evaluation or
+         * Intent Firewall enforcements. Its scope should not be expanded without carefully
+         * reviewing all security implications and use cases.
+         */
         boolean ignoreTargetSecurity;
         boolean componentSpecified;
         boolean avoidMoveToFront;
@@ -955,10 +966,13 @@ class ActivityStarter {
         }
 
         int appCallingUid = mRequest.callingUid;
+        int appCallingPid = mRequest.callingPid;
         if (mRequest.caller != null) {
-            WindowProcessController callerApp = mService.getProcessController(mRequest.caller);
+            final WindowProcessController callerApp =
+                    mService.getProcessController(mRequest.caller);
             if (callerApp != null) {
                 appCallingUid = callerApp.mInfo.uid;
+                appCallingPid = callerApp.getPid();
             } else {
                 Slog.w(TAG, "Unable to find app for caller " + mRequest.caller + " (pid="
                         + mRequest.callingPid + ") when starting: " + mRequest.intent.toString());
@@ -990,8 +1004,11 @@ class ActivityStarter {
         mRequest.intent = newIntent;
         mRequest.resolvedType = null;
         mRequest.caller = null;
-        mRequest.callingUid = Binder.getCallingUid();
-        mRequest.callingPid = Binder.getCallingPid();
+        // Preserve original calling UID/PID for BAL evaluation and ignore target security to
+        // permit starting the non-exported system activity in checkStartAnyActivityPermission.
+        mRequest.callingUid = appCallingUid;
+        mRequest.callingPid = appCallingPid;
+        mRequest.ignoreTargetSecurity = true;
         mRequest.componentSpecified = true;
         mRequest.resolveInfo = mSupervisor.resolveIntent(mRequest.intent, null /* resolvedType */,
                 mRequest.userId, 0 /* matchFlags */,
@@ -1134,14 +1151,24 @@ class ActivityStarter {
                 // in the flow, and asking to forward its result back to the previous.  In this
                 // case the activity is serving as a trampoline between the two, so we also want
                 // to update its launchedFromPackage to be the same as the previous activity.
-                // Note that this is safe, since we know these two packages come from the same
-                // uid; the caller could just as well have supplied that same package name itself
-                // . This specifially deals with the case of an intent picker/chooser being
+                // This specifically deals with the case of an intent picker/chooser being
                 // launched in the app flow to redirect to an activity picked by the user, where
                 // we want the final activity to consider it to have been launched by the
                 // previous app activity.
-                callingPackage = sourceRecord.launchedFromPackage;
-                callingFeatureId = sourceRecord.launchedFromFeatureId;
+                final String launchedFromPackage = sourceRecord.launchedFromPackage;
+                if (launchedFromPackage != null) {
+                    final PackageManagerInternal pmInternal =
+                            mService.getPackageManagerInternalLocked();
+                    final int packageUid = pmInternal.getPackageUid(
+                            launchedFromPackage, 0 /* flags */,
+                            UserHandle.getUserId(callingUid));
+                    // Only override callingPackage and callingFeatureId based on package UID check.
+                    // This is to prevent spoofing. See b/457742426.
+                    if (UserHandle.isSameApp(packageUid, callingUid)) {
+                        callingPackage = launchedFromPackage;
+                        callingFeatureId = sourceRecord.launchedFromFeatureId;
+                    }
+                }
             }
         }
 
@@ -1478,6 +1505,13 @@ class ActivityStarter {
                 .setActivityOptions(checkedOptions)
                 .setSourceRecord(sourceRecord)
                 .build();
+
+        // Reset the launch-behind flag to avoid making it visible if the activity launch should
+        // be blocked.
+        if (r.mLaunchTaskBehind && balVerdict.blocks()) {
+            Slog.w(TAG, "Disallowed launching behind for a background launch");
+            r.mLaunchTaskBehind = false;
+        }
 
         mLastStartActivityRecord = r;
 

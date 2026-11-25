@@ -1793,7 +1793,11 @@ final class DevicePolicyEngine {
             if (!policyDefinition.shouldSkipEnforcementIfNotChanged()) {
                 PolicyValue<V> policyValue =
                         (PolicyValue<V>) policyState.getCurrentResolvedPolicy();
-                enforcePolicy(policyDefinition, policyValue, UserHandle.USER_ALL);
+                try {
+                    enforcePolicy(policyDefinition, policyValue, UserHandle.USER_ALL);
+                } catch (Exception e) {
+                    Slogf.wtf(TAG, "Failed to reapply policy " + policy, e);
+                }
             }
         }
         for (int i = 0; i < mLocalPolicies.size(); i++) {
@@ -1806,7 +1810,12 @@ final class DevicePolicyEngine {
                 if (!policyDefinition.shouldSkipEnforcementIfNotChanged()) {
                     PolicyValue<V> policyValue =
                             (PolicyValue<V>) policyState.getCurrentResolvedPolicy();
-                    enforcePolicy(policyDefinition, policyValue, userId);
+                    try {
+                        enforcePolicy(policyDefinition, policyValue, userId);
+                    } catch (Exception e) {
+                        Slogf.wtf(TAG, "Failed to reapply policy " + policy
+                                + " for user " + userId, e);
+                    }
                 }
             }
         }
@@ -2113,7 +2122,11 @@ final class DevicePolicyEngine {
                         if (policyDefinition == null) {
                             Slogf.w(TAG, "Skipping policy state - unknown policy definition");
                         } else {
-                            policyState = PolicyState.readFromXml(policyDefinition, parser);
+                            try {
+                                policyState = PolicyState.readFromXml(policyDefinition, parser);
+                            } catch (IllegalArgumentException e) {
+                                Slogf.wtf(TAG, "Error parsing policy state", e);
+                            }
                         }
                         break;
                     default:

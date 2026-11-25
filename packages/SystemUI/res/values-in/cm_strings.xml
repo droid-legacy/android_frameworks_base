@@ -32,6 +32,7 @@
     <string name="global_action_restart_fastboot_progress">Memulai ulang ke mode fastbootd</string>
     <string name="global_action_current_user">Saat ini</string>
     <string name="global_action_users">Pengguna</string>
+    <string name="status_bar_icons_title">Ikon status bar</string>
     <string name="quick_settings_ambient_display_label">Tampilan ambien</string>
     <string name="accessibility_quick_settings_ambient_display_off">Tampilan ambien mati.</string>
     <string name="accessibility_quick_settings_ambient_display_on">Tampilan ambien hidup.</string>
@@ -71,4 +72,7 @@
     <string name="screenrecord_hevc_switch_summary">Gunakan HEVC encoder yang lebih efisien</string>
     <string name="battery_notification_channel_tv">Peringatan baterai</string>
     <string name="screenshot_delete_label">Hapus</string>
+    <string name="screenshot_delete_description">Hapus tangkapan layar</string>
+    <string name="screen_pinning_description_no_navbar">Ini membuatnya tetap dalam layar sampai anda melepasnya. Pilih &amp; tahan tombol Kembali untuk melepas sematan.</string>
+    <string name="screen_pinning_toast_no_navbar">Untuk melepaskan sematan layar ini, sentuh &amp; tahan tombol Kembali</string>
 </resources>
